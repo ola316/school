@@ -1,0 +1,99 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Admin - School CMS</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;margin:20px}
+    input,textarea{width:100%;padding:8px;margin:6px 0}
+    .small{width:200px}
+    .card{padding:10px;border:1px solid #ddd;border-radius:6px;margin-bottom:10px}
+  </style>
+</head>
+<body>
+  <h1>Admin Panel</h1>
+  <div id="loginBox">
+    <h3>Login</h3>
+    <input id="username" placeholder="username" value="admin">
+    <input id="password" placeholder="password" value="password123" type="password">
+    <button onclick="login()">Login</button>
+    <div id="loginMsg"></div>
+  </div>
+
+  <div id="mainBox" style="display:none">
+    <h2>Create Announcement</h2>
+    <input id="a_title" placeholder="Title">
+    <input id="a_date" placeholder="YYYY-MM-DD" class="small">
+    <textarea id="a_content" placeholder="Content"></textarea>
+    <button onclick="createAnnouncement()">Create</button>
+
+    <h2>Upload Photo</h2>
+    <input type="file" id="fileInput">
+    <input id="fileCaption" placeholder="Caption">
+    <button onclick="uploadPhoto()">Upload</button>
+
+    <h2>Create Event</h2>
+    <input id="e_title" placeholder="Title">
+    <input id="e_date" placeholder="YYYY-MM-DD" class="small">
+    <textarea id="e_description" placeholder="Description"></textarea>
+    <button onclick="createEvent()">Create Event</button>
+
+    <h2>Existing Announcements</h2>
+    <div id="annList"></div>
+  </div>
+
+<script>
+const API = "http://localhost:3000/api";
+let token = null;
+
+function login(){
+  const u = document.getElementById('username').value;
+  const p = document.getElementById('password').value;
+  // demo login — in production you'd call an auth endpoint
+  if(u === 'admin' && p === 'password123'){ token = 'demo-admin-token'; document.getElementById('loginBox').style.display='none'; document.getElementById('mainBox').style.display='block'; loadAnnouncements(); }
+  else document.getElementById('loginMsg').innerText = "Invalid credentials";
+}
+
+async function createAnnouncement(){
+  const title = document.getElementById('a_title').value;
+  const date = document.getElementById('a_date').value;
+  const content = document.getElementById('a_content').value;
+  const res = await fetch(API + "/announcements", {method:'POST', headers: {'Content-Type':'application/json','x-admin-token': token}, body: JSON.stringify({title,content,date})});
+  alert((await res.json()).id ? 'Created' : 'Error');
+  loadAnnouncements();
+}
+async function loadAnnouncements(){
+  const res = await fetch(API + "/announcements");
+  const items = await res.json();
+  const container = document.getElementById('annList');
+  container.innerHTML = items.map(a => `<div class="card"><strong>${a.title}</strong> <em>${a.date}</em><p>${a.content}</p>
+    <button onclick="deleteAnn(${a.id})">Delete</button>
+    </div>`).join('');
+}
+async function deleteAnn(id){
+  await fetch(API + "/announcements/" + id, {method:'DELETE', headers:{'x-admin-token': token}});
+  loadAnnouncements();
+}
+async function uploadPhoto(){
+  const file = document.getElementById('fileInput').files[0];
+  const caption = document.getElementById('fileCaption').value;
+  if(!file) return alert('Choose a file');
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('caption', caption);
+  const res = await fetch(API + "/upload", {method:'POST', headers:{'x-admin-token': token}, body: fd});
+  const data = await res.json();
+  if(data.id) alert('Uploaded');
+  loadAnnouncements();
+}
+async function createEvent(){
+  const title = document.getElementById('e_title').value;
+  const date = document.getElementById('e_date').value;
+  const description = document.getElementById('e_description').value;
+  const res = await fetch(API + "/events", {method:'POST', headers: {'Content-Type':'application/json','x-admin-token': token}, body: JSON.stringify({title,description,date})});
+  alert((await res.json()).id ? 'Event created' : 'Error');
+}
+</script>
+</body>
+</html>

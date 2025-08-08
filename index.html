@@ -1,0 +1,60 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>School Website - Home</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;margin:20px}
+    header{display:flex;justify-content:space-between;align-items:center}
+    .announcements,.events,.gallery{margin-top:20px}
+    .card{padding:10px;border:1px solid #ddd;border-radius:6px;margin-bottom:10px}
+    img.thumb{max-width:150px;height:auto;border-radius:6px}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Sample School</h1>
+    <nav><a href="admin.html">Admin Panel</a></nav>
+  </header>
+
+  <section class="announcements">
+    <h2>Announcements</h2>
+    <div id="announcements"></div>
+  </section>
+
+  <section class="events">
+    <h2>Upcoming Events</h2>
+    <div id="events"></div>
+  </section>
+
+  <section class="gallery">
+    <h2>Gallery</h2>
+    <div id="gallery"></div>
+  </section>
+
+<script>
+const API = "http://localhost:3000/api";
+
+async function loadAnnouncements(){
+  const res = await fetch(API + "/announcements");
+  const items = await res.json();
+  const container = document.getElementById('announcements');
+  container.innerHTML = items.map(a => `<div class="card"><strong>${a.title}</strong> — <em>${a.date}</em><p>${a.content}</p></div>`).join('');
+}
+async function loadEvents(){
+  const res = await fetch(API + "/events");
+  const items = await res.json();
+  const container = document.getElementById('events');
+  container.innerHTML = items.map(e => `<div class="card"><strong>${e.title}</strong> — <em>${e.date}</em><p>${e.description}</p></div>`).join('');
+}
+async function loadGallery(){
+  const res = await fetch(API + "/gallery");
+  const items = await res.json();
+  const container = document.getElementById('gallery');
+  container.innerHTML = items.map(g => `<div class="card"><img class="thumb" src="http://localhost:3000/uploads/${g.filename}" alt=""><div>${g.caption}</div></div>`).join('');
+}
+loadAnnouncements(); loadEvents(); loadGallery();
+</script>
+</body>
+</html>
